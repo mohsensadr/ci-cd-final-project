@@ -1,32 +1,92 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: run-nose-tests-with-cleanup
+  name: cleanup
 spec:
-  workspaces:
-    - name: source
   steps:
-    - name: install-deps
-      image: python:3.10
-      workingDir: /workspace/source
+    - name: remove-temp-files
+      image: registry.access.redhat.com/ubi8/python-39
       script: |
-        set -eux
-        pip install --upgrade pip
-        pip install nose rednose numpy pytest
-
-    - name: run-nose-tests
-      image: python:3.10
-      workingDir: /workspace/source
-      script: |
-        set -eux
-        PYTHONPATH=. python run_nose_fix_exit.py --rednose -v --nologcapture
-
-    - name: cleanup
-      image: python:3.10
-      workingDir: /workspace/source
-      script: |
-        set -eux
+        #!/usr/bin/env bash
         echo "Cleaning up temporary files..."
-        rm -rf .pytest_cache .noseids
-        find . -name '*.pyc' -delete
-
+        rm -rf __pycache__ .pytest_cache build dist *.egg-info
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: git-clone
+spec:
+  params:
+    - name: url
+      type: string
+    - name: revision
+      type: string
+      default: main
+  steps:
+    - name: clone
+      image: alpine/git
+      script: |
+        #!/usr/bin/env sh
+        git clone --branch $(params.revision) $(params.url) /workspace/source
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: flake8-lint
+spec:
+  steps:
+    - name: run-flake8
+      image: python:3.10
+      workingDir: /workspace/source
+      script: |
+        #!/usr/bin/env bash
+        pip install flake8
+        flake8 src tests
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: nose-tests
+spec:
+  steps:
+    - name: run-nose
+      image: python:3.10
+      workingDir: /workspace/source
+      script: |
+        #!/usr/bin/env bash
+        pip install nose rednose numpy
+        PYTHONPATH=. python run_nose_fix_exit.py --rednose -v --nologcapture
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: buildah-build
+spec:
+  params:
+    - name: image
+      type: string
+  steps:
+    - name: build-image
+      image: quay.io/buildah/stable
+      securityContext:
+        privileged: true
+      workingDir: /workspace/source
+      script: |
+        #!/usr/bin/env bash
+        buildah bud -t $(params.image) .
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: deploy-openshift
+spec:
+  params:
+    - name: image
+      type: string
+  steps:
+    - name: oc-deploy
+      image: quay.io/openshift/origin-cli:latest
+      script: |
+        #!/usr/bin/env bash
+        echo "Deploying to OpenShift..."
+        oc set image deployment/my-app my-app=$(params.image) --record
