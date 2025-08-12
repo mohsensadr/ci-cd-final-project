@@ -32,7 +32,7 @@ spec:
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: flake8-lint
+  name: flake8
 spec:
   steps:
     - name: run-flake8
@@ -46,7 +46,7 @@ spec:
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: nose-tests
+  name: nose
 spec:
   steps:
     - name: run-nose
@@ -60,7 +60,7 @@ spec:
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: buildah-build
+  name: buildah
 spec:
   params:
     - name: image
@@ -78,7 +78,7 @@ spec:
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: deploy-openshift
+  name: deploy
 spec:
   params:
     - name: image
