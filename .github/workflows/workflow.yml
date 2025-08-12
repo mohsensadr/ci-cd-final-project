@@ -28,9 +28,8 @@ jobs:
       run: |
         # Fail if syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # Exit-zero treats all errors as warnings (for style guide enforcement)
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
 
     - name: Run tests
-      run: PYTHONPATH=src pytest -v
+      run: PYTHONPATH=. pytest -v
 
