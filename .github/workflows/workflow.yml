@@ -1,4 +1,4 @@
-name: Python package checks
+name: CI workflow
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest numpy flake8
 
-    - name: Run flake8 linting
+    - name: Lint with flake8
       run: |
         # Fail if syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
