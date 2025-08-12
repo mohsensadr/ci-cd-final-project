@@ -36,5 +36,5 @@ jobs:
     - name: Patch nose for Python 3.10+
       run: python -c "import collections; import collections.abc; collections.Callable = collections.abc.Callable"
 
-    - name: Run tests with nose
-      run: PYTHONPATH=. nosetests --rednose --with-coverage --cover-package=src -v
+    - name: Run unit tests with nose
+      run: PYTHONPATH=. python run_nose.py --rednose --with-coverage --cover-package=src -v
