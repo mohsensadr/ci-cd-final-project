@@ -1,0 +1,32 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: run-nose-tests-with-cleanup
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: install-deps
+      image: python:3.10
+      workingDir: /workspace/source
+      script: |
+        set -eux
+        pip install --upgrade pip
+        pip install nose rednose numpy pytest
+
+    - name: run-nose-tests
+      image: python:3.10
+      workingDir: /workspace/source
+      script: |
+        set -eux
+        PYTHONPATH=. python run_nose_fix_exit.py --rednose -v --nologcapture
+
+    - name: cleanup
+      image: python:3.10
+      workingDir: /workspace/source
+      script: |
+        set -eux
+        echo "Cleaning up temporary files..."
+        rm -rf .pytest_cache .noseids
+        find . -name '*.pyc' -delete
+
