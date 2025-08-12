@@ -34,4 +34,10 @@ jobs:
       run: PYTHONPATH=. pytest -v
 
     - name: Run unit tests with nose
-      run: PYTHONPATH=. python run_nose.py --rednose --with-coverage --cover-package=src -v --nologcapture --cover-erase
+      run: PYTHONPATH=. python run_nose.py --rednose -v --nologcapture
+
+    - name: Run unit tests with coverage
+      run: PYTHONPATH=. coverage run -m nose --rednose -v --nologcapture
+
+    - name: Report coverage
+      run: PYTHONPATH=. coverage report --fail-under=0 --show-missing
